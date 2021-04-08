@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>中转页</title>
+</head>
+<body>
+
+</body>
+<script></script>
+<script src="../js/jquery-1.12.2.min.js"></script>
+<script src="../config/config.js"></script>
+<script>
+    $(() => {
+      const params = GetRequest();
+      const { code } = params;
+      isLogin();
+      function isLogin() {
+        $.ajax({
+          url: `${$baseUrl}/user/login-or-detail?code=${code}`,
+          type: 'get',
+          dataType: 'json',
+          contentType: 'application/json; charset=utf-8',
+          success(res) {
+            if (res.code === 1) {
+              const { openIdEncry } = res.data;
+              localStorage.setItem('openIdEncry', openIdEncry || '');
+              location.href = (res.data.isLogin
+                ? 'login.html' : `mess.html?userId=${res.data.userId}&mobile=${res.data.mobile}`
+              );
+            } else {
+              alert(res.message);
+            }
+          },
+        });
+      }
+});
+</script>
+</html>

@@ -1,0 +1,15 @@
+
+.van-tree-select__item {
+    color: #666;
+}
+.van-picker__cancel, .van-picker__confirm,
+.van-tree-select__item--active,
+.van-dialog__confirm, .van-dialog__confirm:active {
+    color: #f4a32d;
+}
+.van-sidebar-item--select {
+    border-color: #f4a32d;
+}
+.van-tree-select__content {
+    padding-top: 2px;
+}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title>信息详情</title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.5/lib/index.css">
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../../common/vant/vant.css"/>
+    <link rel="stylesheet" href="../css/login.css"/>
+    <link rel="stylesheet" href="../css/call.css"/>
+
+    <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vant@2.5/lib/vant.min.js"></script>
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.4.0.js"></script>
+    <script src="../config/config.js"></script>
+    <script src="../config/request.js "></script>
+
+</head>
+<body>
+<div id="callRecordDetail">
+    <div class="head">呼叫记录</div>
+    <div class="call-record-detail">
+        <van-cell title="项目名称" :value="recordData.projectName"></van-cell>
+        <van-cell title="中心名称" :value="recordData.siteName"></van-cell>
+        <van-cell title="发起角色" :value="recordData.initiatorRole"></van-cell>
+        <van-cell title="发起人" :value="recordData.initiator"  ></van-cell>
+        <van-cell title="接听角色" :value="recordData.answerRole"  ></van-cell>
+        <van-cell title="接听人" :value="recordData.answerPerson"  ></van-cell>
+        <van-cell title="呼叫类型" :value="recordData.callType"  ></van-cell>
+        <van-cell title="随访访视" v-if="recordData.callType === '随访事件'" :value="recordData.visitType"  ></van-cell>
+        <van-cell title="事件名称/类型" v-if="recordData.callType === '随访事件'" :value="recordData.pinjieEvent"  ></van-cell>
+        <van-cell title="备注" :value="recordData.remark"></van-cell>
+        <template v-if="recordData.callAddress">
+            <van-cell title="录音记录" @click="download" value="下载录音"></van-cell>
+        </template>
+        <template v-else>
+            <van-cell title="录音记录" value="" ></van-cell>
+        </template>
+        <div>
+        </div>
+    </div>
+</div>
+<script>
+new Vue({
+  el: '#callRecordDetail',
+  data: {
+    id: '',
+    recordData: {},
+    isPlay: false,
+  },
+  created() {
+    const params = GetRequest();
+    this.id = params.id;
+    this.init();
+  },
+  methods: {
+    init() {
+      getApi(`${$callUrl}/engine/call-center/call-record/${this.id}?wx=4`).then((res) => {
+        if (res && res.data) {
+          this.recordData = res.data;
+
+          const eventTypeArr = this.recordData.eventType ? this.recordData.eventType.split(',') : [];
+          const eventNameArr = this.recordData.eventName ? this.recordData.eventName.split(',') : [];
+          const eventPinjieArr = eventNameArr.map((name, i) => `${name}/${eventTypeArr[i]}`);
+          this.recordData.pinjieEvent = eventPinjieArr.length ? eventPinjieArr.join(',') : '';
+        }
+      });
+    },
+    download() {
+      window.location.href = `download.html?id=${this.id}`;
+    },
+  },
+});
+</script>
+</body>
+</html>

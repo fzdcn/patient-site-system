@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title>收款详情</title>
+    <link rel="stylesheet" href="../../css/common.css"/>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div>
+    <h2 class="head"><i class="go-back"></i>收款详情</h2>
+    <ul class="detail-list">
+        <li>
+            <p>项目编码/申办方编号：</p>
+            <span name="projectCode"></span>
+        </li>
+        <li>
+            <p>项目名称：</p>
+            <span name="projectName"></span>
+        </li>
+        <li>
+            <p>中心名称：</p>
+            <span name="siteName"></span>
+        </li>
+        <li>
+            <p>受试者编号：</p>
+            <span name="subjectCode"></span>
+        </li>
+        <li>
+            <p>更新时间：</p>
+            <span name="updateTime"></span>
+        </li>
+        <li>
+            <p>打款金额（元）：</p>
+            <span name="amount"></span>
+        </li>
+    </ul>
+</div>
+</body>
+<script src="../../js/jquery-1.12.2.min.js"></script>
+<script src="../../config/config.js"></script>
+<script>
+  $(function() {
+    const params = GetRequest();
+    const { detailInfo } = params;
+    formatDetail();
+    function formatDetail() {
+      const detailObj = JSON.parse(detailInfo);
+      Object.keys(detailObj).forEach((key) => {
+        if (key === 'updateTime') {
+          $(`span[name="${key}"]`).text(formatTime(detailObj[key]));
+        }else if(key === 'amount') {
+          $(`span[name="${key}"]`).text(detailObj[key] || 0 + '元');
+        }else {
+          $(`span[name="${key}"]`).text(detailObj[key] || '');
+        }
+      });
+    }
+    function formatTime(time) {
+      const date = new Date(time);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const hour = date.getHours();
+      const second = date.getMinutes();
+      return `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day} ${hour < 10 ? `0${hour}` : hour}:${second < 10 ? `0${second}` : second}`;
+    }
+  });
+</script>
+</html>

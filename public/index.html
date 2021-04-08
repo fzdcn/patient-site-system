@@ -1,17 +1,35 @@
 <!DOCTYPE html>
-<html lang="">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title><%= htmlWebpackPlugin.options.title %></title>
-  </head>
-  <body>
-    <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-    </noscript>
-    <div id="app"></div>
-    <!-- built files will be auto injected -->
-  </body>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="pragram" content="no-cache" />
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="expires" content="0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+  <title>铨融用户端后台管理系统</title>
+  <style media="screen" type="text/css">
+    #appLoading img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 400px;
+      /*height: 400px;*/
+      -webkit-transform: translateY(-50%) translateX(-50%);
+      transform: translateY(-50%) translateX(-50%);
+    }
+  </style>
+</head>
+
+<body style="background-color: #ffdfb9">
+  <div id="appLoading">
+    <img src="<%= BASE_URL %>resource/common/image/loading.gif" alt="loading" />
+  </div>
+  <div id="app"></div>
+  <script src="https://cstaticdun.126.net/load.min.js?t=201908311201"></script>
+  <!-- built files will be auto injected -->
+</body>
+
 </html>

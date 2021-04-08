@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../css/login.css"/>
+</head>
+<body>
+    <div class="head">用户登录
+        <span class="register-btn">注册</span>
+    </div>
+    <form id="form">
+        <ul class="formUl">
+            <li class="phoneNum">
+                <span class="txt">手机号</span>
+                <input id="phoneNum" type="text" placeholder="请输入手机号" autocomplete="off" title=""/>
+            </li>
+            <li class="checkCodeImg">
+                <span class="txt">验证码</span>
+                <input type="text" id="checkCodeImg" placeholder="请输入图形验证码" autocomplete="off" title=""/>
+                <img id="imgCode" class="imgCode" src="" />
+            </li>
+            <li class="checkCode">
+                <span class="txt">短信验证码</span>
+                <input type="text" id="checkCode" placeholder="请输入短信验证码" autocomplete="off" title=""/>
+                <span class="getCode" id="getSmsCode">获取验证码</span>
+            </li>
+        </ul>
+    </form>
+<button class="btn login-btn">立即登录</button>
+    <script src="../js/jquery-1.12.2.min.js"></script>
+    <script src="../config/config.js"></script>
+    <script>
+      // 衡心: openAccountStep
+      // 衡心: 这个值为3表示注册完了
+      // 衡心: 1是只绑定了手机号
+      // 衡心: 2是身份证信息完成了注册
+      const openIdEncry = localStorage.getItem('openIdEncry');
+      const mobileReg = /^1[3456789]\d{9}$/;
+      const LAST_SMS_SEND_KEY = '___find_send_sms';
+      const getCodeBtn = document.querySelector('#getSmsCode');
+      function bindPhoneValidate() {
+        const phoneNum = document.getElementById('phoneNum').value;
+        const checkCodeImg = document.getElementById('checkCodeImg').value;
+        const checkCode = document.getElementById('checkCode').value;
+        // const password = document.getElementById('password').value;
+        if (!phoneNum) {
+          alert('手机号不能为空');
+          return false;
+        }
+        if (!mobileReg.test(phoneNum)) {
+          alert('请输入正确的手机号');
+          return false;
+        }
+        if (!checkCodeImg) {
+          alert('验证码不能为空');
+          return false;
+        }
+        if (!checkCode) {
+          alert('短信验证码不能为空');
+          return false;
+        }
+        return true;
+      }
+      function loginFn() {
+        if (!bindPhoneValidate()) {
+          return;
+        }
+        $.ajax({
+          url: `${$baseUrl}/user/login`,
+          type: 'post',
+          dataType: 'json',
+          // contentType: "application/json",
+          contentType: 'application/json; charset=utf-8',
+          data: JSON.stringify({
+            smsCode: $('#checkCode').val(),
+            mobile: $('#phoneNum').val(),
+            openIdEncry,
+          }),
+          success(res) {
+            // 验证
+            if (res.code === 1) {
+              location.href = `mess.html?userId=${res.data.userId}&mobile=${res.data.mobile}`;
+            } else {
+              alert(res.message);
+            }
+          },
+        });
+      }
+      function validateCode() {
+        const phoneNum = document.getElementById('phoneNum').value;
+        const checkCodeImg = document.getElementById('checkCodeImg').value;
+        if (!phoneNum) {
+          alert('手机号不能为空');
+          return false;
+        }
+        if (!mobileReg.test(phoneNum)) {
+          alert('请输入正确的手机号');
+          return false;
+        }
+        if (!checkCodeImg) {
+          alert('验证码不能为空');
+          return false;
+        }
+        if ($('#getSmsCode').hasClass('disabled')) {
+          return false;
+        }
+        return true;
+      }
+      function getCode() {
+        if (!validateCode()) {
+          return;
+        }
+
+        $.ajax({
+          url: `${$baseUrl}/user/send-login-sms`,
+          type: 'post',
+          dataType: 'json',
+          // contentType: "application/json",
+          contentType: 'application/json; charset=utf-8',
+          data: JSON.stringify({
+            imageCode: $('#checkCodeImg').val(),
+            mobile: $('#phoneNum').val(),
+          }),
+          success(res) {
+            if (res.code === 1) {
+              setLastSendTime();
+              expiredCheck();
+              alert('验证码已发送！');
+            } else {
+              alert(res.message);
+              getImgValidate();
+            }
+          },
+        });
+      }
+      function getLastSendTime() {
+        return +(sessionStorage.getItem(LAST_SMS_SEND_KEY) || '0');
+      }
+      function setLastSendTime(date = (new Date().getTime() + 59 * 1000)) {
+        sessionStorage.setItem(LAST_SMS_SEND_KEY, date);
+      }
+      function isLastSendTimeExpired() {
+        return new Date().getTime() > getLastSendTime();
+      }
+      function expiredCheck() {
+        if (!isLastSendTimeExpired()) {
+          const expiredDate = getLastSendTime();
+          const now = new Date().getTime();
+          const diff = +((expiredDate - now) / 1000).toFixed(0);
+          if (diff) {
+            getCodeBtn.className = 'disabled';
+            setTimeout(expiredCheck, 1000);
+          } else {
+            getCodeBtn.className = 'getCode';
+          }
+          getCodeBtn.innerText = diff ? `重新获取${diff}s` : '获取验证码';
+        } else {
+          getCodeBtn.className = 'getCode';
+          getCodeBtn.innerText = '获取验证码';
+        }
+      }
+
+      function getImgValidate() {
+        $.ajax({
+          url: `${$baseUrl}/image-validation`,
+          type: 'GET',
+          dataType: 'json',
+          success(res) {
+            $('.imgCode').attr('src', res.data);
+          },
+        });
+      }
+
+      $('#getSmsCode').on('click', () => {
+        getCode();
+      });
+      $('.login-btn').on('click', () => {
+        loginFn();
+      });
+      $('.imgCode').on('click', () => {
+        getImgValidate();
+      });
+      $('.register-btn').on('click', function (){
+      // window.localStorage.setItem('mobile', '')
+      // window.localStorage.setItem('imageCode', '')
+      // window.localStorage.setItem('smsCode', '')
+      location.href = `register.html?openIdEncry=${openIdEncry}`;
+    });
+
+      $('#phoneNum').on('blur', function() {
+        const phoneNum = document.getElementById('phoneNum').value;
+        if (!mobileReg.test(phoneNum)) {
+          alert('请输入正确的手机号');
+          return false;
+        }
+      });
+      getImgValidate();
+    </script>
+</body>
+</html>

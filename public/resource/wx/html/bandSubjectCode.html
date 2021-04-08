@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../css/login.css" />
+
+</head>
+<body>
+<div class="head"> 绑定受试者编号</div>
+<form action="" id="form">
+    <ul class="formUl-bind">
+        <li class="userCode">
+            <span class="txt">受试者编码</span>
+            <div>
+                <input id="userCode" type="text" class="ipt1" placeholder="请输入受试者编码" autocomplete="off" title="">
+            </div>
+        </li>
+    </ul>
+</form>
+<button class="btn">确定</button>
+</body>
+<script src="../js/jquery-1.12.2.min.js"></script>
+<script src="../config/config.js"></script>
+<script type="text/javascript">
+    $(() => {
+  const params = GetRequest();
+  const { userId } = params;
+  $('.btn').on('click', () => {
+    if (!$('#userCode').val()) {
+          alert('受试者编码必填');
+          return;
+    }
+    $.ajax({
+          url: `${$baseUrl}/user/modify-user-code?userId=${userId}&userCode=${$('#userCode').val()}`,
+          type: 'post',
+          dataType: 'json',
+          // contentType: "application/json",
+          contentType: 'application/json; charset=utf-8',
+          // data: JSON.stringify({
+          //   userId: userId,
+          //   userCode: $('#userCode').val()
+          // }),
+          success(res) {
+            if (res.code === 1) {
+              location.href = `mess.html?mobile=${res.data.mobile}&userId=${userId}`;
+            } else {
+              alert(res.message);
+            }
+          },
+    });
+  });
+});
+</script>
+</html>

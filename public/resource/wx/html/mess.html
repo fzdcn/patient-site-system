@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../css/login.css"/>
+</head>
+<body>
+<div class="head"><i class="change-account-btn">切换账号</i>信息详情 <div class="erCode" onclick="shadowShow()"><img src="../images/code.png" width="100%" height="100%" alt=""/></div></div>
+<div class="messageTxt">个人信息 <span class="update-btn idCard">更新绑定信息</span></div>
+<!--姓名，性别，手机号，身份证号，身份证已认证-->
+<ul class="messUl user-mess-ul" >
+    <li><i>姓名</i><span id="userName" name="realName"></span></li>
+    <li><i>性别</i><span name="sexName"></span></li>
+    <li><i>手机号</i><span name="mobile"></span></li>
+    <!--    <li><i>身份证是否认证</i><span >已认证</span></li>-->
+    <li><i>身份证号</i><span name="idcard"></span></li>
+</ul>
+<!--二维码-->
+<div class="shadow-code" onclick="shadowHide(this)">
+    <div class="shadow-img-box"></div>
+</div>
+
+<div class="messageTxt">银行卡信息<span class="update-btn bank">更换银行卡</span></div>
+<!--银行名称，所在省市，开户支行，开户人姓名-->
+<ul class="messUl">
+    <li><i>银行账号</i><span name="bankAccount"></span></li>
+    <li><i>银行名称</i><span name="bankName"></span></li>
+    <li><i>开户支行</i><span name="bankBranch"></span></li>
+</ul>
+<div class="userType-info">用户类型：
+    <select id="userTypeSelect">
+        <option value="1">受试者</option>
+        <option value="2">CRC/研究者</option>
+    </select>
+    <span class="userType-name">受试者</span>
+    <span class="update-btn userType">修改</span>
+    <span class="userType-confirm-btn">确认</span>
+</div>
+<div class="subject-info">受试者编码：  <span class="subject-code" name="userCode"></span><span class="update-btn subjectCode">修改</span></div>
+<div class="messageTxt">参与项目</div>
+<!--项目名称，项目详情-->
+<div class="items">
+</div>
+<div class="messageTxt" style="margin: 10px 0;">收款记录 <span class="update-btn view-receive-btn">查看</span></div>
+<div class="agreement-model-bg"></div>
+<div class="agreement-model-wrap">
+    <h2>是否同意以下协议</h2>
+    <div class="model-content">
+        <div class="info-item"><span>协议名称：</span><a href="javascript:;" target="_blank"></a></div>
+        <div class="info-item"><span>签名：</span>
+        <div class="signature-wrap">
+            <div id="signature"></div>
+            <div class="tools-btn">
+                <span>重置</span>
+                <!--            <span class="prev-btn">上一步</span>-->
+            </div>
+        </div>
+    </div>
+    <div class="model-footer">
+        <span class="notAgree">不同意</span>
+        <span class="agree">同意</span>
+    </div>
+</div>
+<!--<div class="messageTxt">呼叫记录<span class="update-btn callRecord">查看</span></div>-->
+<script src="../js/jquery-1.12.2.min.js"></script>
+<script src="../config/config.js"></script>
+<script src="../js/jquery.qrcode.min.js"></script>
+<script src="../js/jSignature.min.js"></script>
+<script>
+  $(() => {
+    const params = GetRequest();
+    const { mobile } = params;
+    const { userId } = params;
+    const openAccountStep = 3;
+    let agreementIndex = 0;
+    // let projectUserId = '';
+    // let projectAgreementId = '';
+
+    getDetailInfo('init');
+    initSignature();
+    function getDetailInfo(isInit) {
+      if (!mobile) {
+        return;
+      }
+      $.ajax({
+        url: `${$baseUrl}/user/query-by-mobile`,
+        type: 'get',
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
+        data: {
+          mobile,
+        },
+        success(res) {
+          if (res.code === 1) {
+            formatUserInfo(res.data);
+            formmatUserType(res.data.userType);
+            if (res.data.userCode) {
+              genQrCode(res.data.qrCode, res.data.userCode);
+              if (isInit && res.data.userType === 1 && res.data.projects.length
+                && res.data.projects[0].agreementStatus !== 1) {
+                getAgreementSign();
+                intervalFn();
+              }
+            } else {
+              $('.erCode').hide();
+            }
+          }
+        },
+      });
+    }
+    function initSignature() {
+      const $sigdiv = $('#signature').jSignature({ UndoButton: true, width: `${document.body.offsetWidth * 0.8 - 44}px`, height: '150px' });
+      $('.tools-btn span').on('click', () => {
+        $sigdiv.jSignature('reset');
+      });
+    }
+    function formatUserInfo(data) {
+      const $spans = $('span');
+      for (let i = 0; i < $spans.length; i++) {
+        const $span = $($spans[i]);
+        const name = $span.attr('name');
+        if ($span.attr('name')) {
+          if ($span.attr('name') === 'idcard' || $span.attr('name') === 'bankAccount') {
+            $span.text(formatCardNo(data[name]));
+          } else if ($span.attr('name') === 'mobile') {
+            $span.text(formatMobile(data[name]));
+          } else {
+            $span.text(data[name] || '--');
+          }
+        }
+      }
+      if (data.projects && data.projects.length) {
+        let html = '';
+        data.projects.forEach((item) => {
+          const signName = (item.agreementStatus === 0 && '未签署') || (item.agreementStatus === 1 && '已签署') || (item.agreementStatus === 2 && '重新签署') || '';
+          const signClass = `${
+            (item.agreementStatus === 0 && 'notSign')
+          || (item.agreementStatus === 1 && 'isSign')
+          || (item.agreementStatus === 2 && 'signAgain') || ''} `;
+          html += `<li userType=${data.userType} id=${data.userType === 1 ? item.projectSubjectId : item.projectTspId}
+                agreementId=${item.agreementId} agreementName=${item.agreementName}>
+                <div class="itemName">项目名称：${item.projectName || '--'}</div>
+                <div class="itemContent">项目编码/申办方编号：${item.projectCode || '--'}</div>
+                ${data.userType == 1 ? `<div class="itemContent">受试者编码：${item.subjectCode || '--'}</div>` : ''}
+                ${data.userType == 1 ? `<div class="itemContent">中心名称：${item.siteName || ''} </div>` : ''}
+                ${data.userType == 1 ? `<div class="itemContent">中心编号：${item.siteCode || ''} </div>` : ''}
+                ${item.agreementName ? `<div class="itemContent">协议名称：${item.agreementName || ''} </div>` : ''}
+                ${item.agreementStatus != null ? `<div class="itemContent agree-sign-btn">协议签署状态：<span class=${signClass}>${signName}</span> </div>` : ''}
+                ${item.callEnable == 'true' ? '<img class="call-image" data-siteNo=\'item.siteCode\' src="../../common/image/call.png"/>' : ''}
+               ${item.agreementStatus === 1 ? `<div class="itemContent">签名：<img src=${item.base64AutographImg} style="height: 50px;vertical-align: top;"></div>` : ''}
+               ${item.callEnable == 'true' ? '<a href="javascript:;" class="view-call-btn">查看呼叫记录</a>' : ''}
+            </li>`;
+        });
+        $('.items').html(`<ul class="pro-list">${html}</ul>`)
+          .on('click', '.view-call-btn', function () {
+            const index = $(this).parent().index();
+            const dataObj = data.projects[index];
+            location.href = `callRecord.html?callEnable=${dataObj.callEnable}&siteNo=${dataObj.siteCode}&subCode=${dataObj.subjectCode}&userId=${userId}&userName=${data.realName}&mobile=${data.mobile}`;
+          })
+          .on('click', '.call-image', function () {
+            const index = $(this).parent().index();
+            const dataObj = data.projects[index];
+            location.href = `callInfo.html?siteNo=${dataObj.siteCode}&subCode=${dataObj.subjectCode}&userId=${userId}&userName=${data.realName}&mobile=${data.mobile}`;
+          });
+      }
+    }
+
+    function formatMobile(mobile) {
+      if (!mobile) {
+        return '--';
+      }
+      var mobile = mobile.split('');
+      for (let i = 3; i < mobile.length - 4; i++) {
+        mobile[i] = '*';
+      }
+      return mobile.join('');
+    }
+
+    function formatCardNo(num) {
+      if (!num) {
+        return '--';
+      }
+      var num = num.split('');
+      for (let i = 3; i < num.length - 4; i++) {
+        num[i] = '*';
+      }
+      return num.join('');
+    }
+    function genQrCode(userId, userCode) {
+      $('.shadow-img-box').html('').qrcode({
+        width: 180,
+        height: 180,
+        text: JSON.stringify({
+          UserID: userId,
+          UserCode: userCode,
+        }),
+      });
+    }
+    function formmatUserType(userType) {
+      $('#userTypeSelect').val(userType).hide();
+      $('.userType-name').text($('#userTypeSelect option:selected').text() || '--').show();
+      $('.userType-confirm-btn').hide();
+      if (userType) {
+        $('.update-btn.userType').hide();
+      } else {
+        $('.update-btn.userType').show();
+      }
+      if (userType === 1) {
+        $('.subject-info').show();
+      } else {
+        $('.subject-info').hide();
+      }
+    }
+
+    let interval = null;
+    function intervalFn() {
+      interval = setInterval(getAgreementSign, 5000);
+    }
+    function clearIntervalFn() {
+      clearInterval(interval);
+    }
+    // 轮询判断项目是否需要签署协议
+    function getAgreementSign() {
+      $.ajax({
+        url: `${$baseUrl}/user/have-agreement/is-signed`,
+        type: 'get',
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
+        data: {
+          userId,
+        },
+        success(res) {
+          if (res.code === 1) {
+            if (res.data.isAgreementSigned) {
+              $('.agreement-model-bg').fadeIn();
+              $('.agreement-model-wrap').fadeIn();
+              clearIntervalFn();
+              $('.model-content a').html(res.data.agreementName).attr('href', `${$baseUrl}/project-agreement/${res.data.agreementId}/inline-attachment`);
+            }
+          }
+        },
+      });
+    }
+
+    // 同意签署协议
+    function agreeSignFn() {
+      if (!$('#signature').jSignature('getData', 'native').length) {
+        alert('请签名！');
+        return;
+      }
+      const $li = $('.pro-list li').eq(agreementIndex);
+      const userType = $li.attr('userType');
+      const id = $li.attr('id');
+      let url = '';
+      if (userType == 1) {
+        url = `${$baseUrl}/project-subject/${id}/signed-agreement`;
+      } else if (userType == 2) {
+        url = `${$baseUrl}/project-user/${id}/signed-agreement`;
+      }
+      $.ajax({
+        url,
+        type: 'post',
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
+        data: JSON.stringify({
+          file: $('#signature').jSignature('getData', 'image').join(','),
+        }),
+        success(res) {
+          if (res.code === 1) {
+            getDetailInfo();
+            $('.agreement-model-bg').fadeOut();
+            $('.agreement-model-wrap').fadeOut();
+          } else {
+            alert(res.message);
+          }
+        },
+      });
+    }
+
+    $('.model-footer').on('click', 'span', function () {
+      if (this.className.includes('agree')) {
+        agreeSignFn();
+        return;
+      }
+      clearIntervalFn();
+      $('.agreement-model-bg').fadeOut();
+      $('.agreement-model-wrap').fadeOut();
+    });
+    // 项目签署协议按钮
+    $('.items').on('click', '.agree-sign-btn span', function () {
+      const $li = $(this).closest('li');
+      agreementIndex = $li.index();
+      const agreementid = $li.attr('agreementid');
+      const agreementName = $li.attr('agreementName');
+      if (this.className.includes('notSign') || this.className.includes('signAgain')) {
+        $('.model-content a').html(agreementName).attr('href', `${$baseUrl}/project-agreement/${agreementid}/inline-attachment`);
+        $('.agreement-model-bg').fadeIn();
+        $('.agreement-model-wrap').fadeIn();
+      }
+    });
+
+
+    $('.update-btn').on('click', function () {
+      if (this.className.includes('idCard')) {
+        location.href = `authentication.html?userId=${userId}&openAccountStep=${openAccountStep}`;
+      } else if (this.className.includes('bank')) {
+        location.href = `bangCard.html?userId=${userId}&openAccountStep=${openAccountStep}`;
+      } else if (this.className.includes('subjectCode')) {
+        location.href = `bandSubjectCode.html?userId=${userId}`;
+      } else if (this.className.includes('view-receive-btn')) { // 呼叫记录 列表页
+        location.href = `receivables/list.html?mobile=${mobile}`;
+      } else if (this.className.includes('userType')) {
+        $('.userType-name').hide();
+        $('#userTypeSelect').show();
+        $('.update-btn.userType').hide();
+        $('.userType-confirm-btn').show();
+      }
+    });
+    $('.userType-confirm-btn').on('click', () => {
+      const userType = $('#userTypeSelect').val();
+      if (!userType) {
+        // alert('用户类型必选！');
+        $('.userType-name').show();
+        $('#userTypeSelect').hide();
+        $('.update-btn.userType').show();
+        $('.userType-confirm-btn').hide();
+        return;
+      }
+      $.ajax({
+        url: `${$baseUrl}/user/modify-user-type?userId=${userId}&userType=${userType}`,
+        type: 'post',
+        dataType: 'json',
+        contentType: 'application/json; charset=utf-8',
+        success(res) {
+          if (res.code === 1) {
+          // $('.update-btn.userType').show();
+          // $('.userType-confirm-btn').hide();
+            getDetailInfo();
+          } else {
+            alert(res.message);
+          }
+        },
+      });
+  });
+    // 切换账号  这边跳转微信url ？？
+    $('.change-account-btn').on('click', () => {
+      location.href = 'login.html';
+    });
+  });
+  //    显示或
+  function shadowShow() {
+    document.getElementsByClassName('shadow-code')[0].style.display = 'block';
+  }
+  // 隐藏
+  function shadowHide() {
+    document.getElementsByClassName('shadow-code')[0].style.display = 'none';
+  }
+  document.querySelector('.shadow-img-box').addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+</script>
+</body>
+</html>

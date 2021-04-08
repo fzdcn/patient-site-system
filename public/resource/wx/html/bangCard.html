@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../css/layer.css"/>
+    <link rel="stylesheet" href="../css/autocomplete.css"/>
+    <link rel="stylesheet" href="../css/login.css" />
+
+</head>
+<body>
+<div class="head">绑定银行卡</div>
+
+<form id="form">
+    <ul class="formUl">
+<!--        <li class="userName">-->
+<!--            <span class="txt">开户人姓名</span>-->
+<!--            <div>-->
+<!--                <input id="userName" type="text" class="ipt1" placeholder="请输入开户人姓名" autocomplete="off" title="">-->
+<!--            </div>-->
+<!--        </li>-->
+        <li class="flex bankAccount">
+            <span>银行卡号</span>
+            <input id="bankAccount" type="text" class="ipt txt-right" placeholder="请输入开户人银行卡号" autocomplete="off" title="">
+        </li>
+        <li class="flex bankName">
+            <span>开卡银行名称</span>
+            <input id="bankName" type="text" class="ipt txt-right" placeholder="请输入开卡银行名称" autocomplete="off" title="">
+        </li>
+        <li class="flex bankBranch">
+            <span>开户行支行名称</span>
+            <input id="bankBranch" type="text" class="ipt txt-right" placeholder="请输入开户行支行名称" autocomplete="off" title="">
+        </li>
+        <li class="cardType flex">
+            <span>卡类型</span>
+            <select id="cardType"  placeholder="请选择卡类型">
+                <option value="0">借记卡</option>
+                <option value="1">信用卡</option>
+            </select>
+        </li>
+        <!--<li class="gankName">
+            <span class="txt">银行名称</span>
+            <div class="bgColor" style="overflow: hidden">
+                <div class="inputHead">
+                    <div class="inputParent">
+                        <input id="gankName" type="text" class="ipt1" placeholder="请输入银行名称" autocomplete="off" title="">
+                        <span></span>
+                    </div>
+                    &lt;!&ndash;<div class="inputDetail">行情</div>&ndash;&gt;
+                </div>
+            </div>
+        </li>
+        <li class="province">
+            <span class="txt">省市</span>
+            <div class="bgColor" style="overflow: hidden">
+                <div class="inputHead">
+                    <div class="inputParent">
+                        <input id="province" type="text" class="ipt1" placeholder="请输入省市" autocomplete="off" title="">
+                        <span></span>
+                    </div>
+                    &lt;!&ndash;<div class="inputDetail">行情</div>&ndash;&gt;
+                </div>
+
+            </div>
+            <span class="imgCode"> </span>
+        </li>
+        <li class="branch">
+            <span class="txt">开户支行</span>
+            <div class="bgColor" style="overflow: hidden">
+                <div class="inputHead">
+                    <div class="inputParent">
+                        <input id="branch" type="text" class="ipt1" placeholder="请输入开户支行" autocomplete="off" title="">
+                        <span></span>
+                    </div>
+                    &lt;!&ndash;<div class="inputDetail">行情</div>&ndash;&gt;
+                </div>
+
+            </div>
+        </li>-->
+
+    </ul>
+</form>
+
+<button class="btn complete-band-btn">完成绑定</button>
+<button class="btn confirm-btn" style="display: none;">确定</button>
+<p class="bang-caution">* 请确保注册手机号与银行卡预留手机号码一致。</p>
+<div class="shadow-box">
+    <div ></div>
+</div>
+<script src="../js/jquery-1.12.2.min.js"></script>
+<script src="../js/codedata.js" type="text/javascript"></script>
+<script src="../js/autocomplete.js" type="text/javascript"></script>
+<script src="../js/autocomplete-setup.js" type="text/javascript"></script>
+<script src="../config/config.js"></script>
+<script>
+    $(() => {
+    // 新增得
+      const params = GetRequest();
+      const { userId } = params;
+      const { openAccountStep } = params;
+      if (openAccountStep == 3) {
+        $('.confirm-btn').show();
+        $('.complete-band-btn').hide();
+      }
+    function validateBankAccount(value) {
+        if (!value) {
+          alert('银行卡号必填');
+          return false;
+        }
+        const bankno = value.replace(/\s/g, '');
+        if (bankno.length < 13 || bankno.length > 19) {
+          alert('银行卡号长度必须在13到19之间');
+          return false;
+        }
+        const num = /^\d*$/;// 全数字validator
+        if (!num.exec(bankno)) {
+          alert('银行卡号必须全为数字');
+          return false;
+        }
+        return true;
+    }
+
+    $('.btn').on('click', function() {
+        const bankAccount = $('#bankAccount').val();
+        const bankName = $('#bankName').val();
+        const bankBranch = $('#bankBranch').val();
+        const cardType = $('#cardType').val();
+        if (!validateBankAccount(bankAccount)) {
+              return;
+        }
+        if (!bankName) {
+              alert('开卡银行名称必填');
+              return;
+        }
+        if (!bankBranch) {
+              alert('开户行支行名称必填');
+              return;
+        }
+        if (!cardType) {
+              alert('卡类型必选');
+              return;
+        }
+        $.ajax({
+              url: `${$baseUrl}/user/${userId}/bind-bank`,
+              type: 'post',
+              dataType: 'json',
+              // contentType: "application/json",
+              contentType: 'application/json; charset=utf-8',
+              data: JSON.stringify({
+                bankAccount,
+                bankName,
+                bankBranch,
+                cardType,
+              }),
+              success(res) {
+                if (res.code === 1) {
+                  location.href = `mess.html?mobile=${res.data.mobile}&userId=${userId}`;
+                } else {
+                  alert(res.message);
+                }
+              },
+        });
+  });
+
+    $('#bankAccount').on('blur', () => {
+    const bankAccount = $('#bankAccount').val();
+    if (!validateBankAccount(bankAccount)) {
+          return;
+    }
+    idenfyCard(bankAccount);
+  });
+
+    function idenfyCard(bankAccount) {
+        $.ajax({
+          url: `${$baseUrl}/user/bank-name/distinguish`,
+          type: 'post',
+          dataType: 'json',
+          // contentType: "application/json",
+          contentType: 'application/json; charset=utf-8',
+          data: JSON.stringify({
+            bankAccount,
+          }),
+          success(res) {
+            if (res.code === 1) {
+              $('#bankName').val(res.data);
+            } else {
+              alert(res.message);
+            }
+          },
+        });
+      }
+
+    $('#listBtn').find('div').click(function () {
+        $('#listBtn').find('div').removeClass('borActive');
+        $(this).addClass('borActive');
+    });
+    $('#liBtn').find('div').click(function () {
+        $('#liBtn').find('div').removeClass('borActive');
+        $(this).addClass('borActive');
+    });
+});
+</script>
+<!--<script>
+    $(function () {
+
+        //智能提示股票信息
+        AutoComplete.setup({
+            "inputElement": "branch",
+            "dataSource": s,
+            "displayZoneWidth": 300,
+            "maxMatchedItemNumberAllowed": 4,
+            "trClickCallback": function (obj) {
+                console.log(obj);
+                // LoadPage(obj.s, obj.c);
+
+                $("#MyUl").html("<li>"+obj.z+"</li>" +
+                        "<li>"+obj.c+"</li>" +
+                        "<li>"+obj.n+"</li>" +
+                        "<li>"+obj.p+"</li>" );
+
+                $("#keyword").attr("data-value", obj.z);
+                //  $('#iframeMain').attr("src", "http://hqw20001.jadegold.cn/hqcn/html/zijin.html?symbol=" + obj.s + obj.c + "&xuao=1");
+            },
+            "inputEnterCallback": function (obj) {
+                //LoadPage(obj.s, obj.c);
+                $("#keyword").attr("data-value", obj.z);
+                //LoadPage(obj.s, obj.c)
+                // $('#iframeMain').attr("src", "http://hqw20001.jadegold.cn/hqcn/html/zijin.html?symbol=" + obj.s + obj.c + "&xuao=1");
+
+                $("#MyUl").html("<li>"+obj.z+"</li>" +
+                        "<li>"+obj.c+"</li>" +
+                        "<li>"+obj.n+"</li>" +
+                        "<li>"+obj.p+"</li>" );
+
+            },
+        });
+    });
+</script>
+<script>
+    var Gti = {};
+    Gti.Common = {};
+    Gti.Common.getTop = function (target, reference) {
+        reference = reference || window;
+        var top = target.offsetTop;
+        target = target.offsetParent;
+        while (target != null && target != reference) {
+            top += (target.offsetTop - target.scrollTop);
+            target = target.offsetParent;
+        }
+        return top - 50;
+    }
+
+    Gti.Common.getLeft = function (target, reference) {
+        reference = reference || window;
+        var left = target.offsetLeft;
+        target = target.offsetParent;
+        while (target != null && target != reference) {
+            left += (target.offsetLeft - target.scrollLeft);
+            target = target.offsetParent;
+        }
+        return left;
+    }
+
+    Gti.Common.getRight = function (target) {
+        return Gti.Common.getLeft(target) + target.offsetWidth;
+    }
+
+    Gti.Common.getBottom = function (target) {
+        return Gti.Common.getTop(target) + target.offsetHeight;
+    }
+
+    Gti.Common.getHeight = function (C, A) {
+        var E = C.offsetHeight || 0;
+        if (A !== true) return E;
+        var D = Gti.Common.getBorderWidths(C),
+                B = Gti.Common.getPaddings(C);
+        return E - D[0] - D[2] - B[0] - B[2];
+    }
+
+    Gti.Common.getWidth = function (D, B) {
+        var A = D.offsetWidth || 0;
+        if (B !== true) return A;
+        var E = Gti.Common.getBorderWidths(D),
+                C = Gti.Common.getPaddings(D);
+        return A - E[1] - E[3] - C[1] - C[3];
+    }
+
+    Gti.Common.getBorderWidths = function (A) {
+        return [Gti.Common.parseInt(A.style.borderTopWidth),
+            Gti.Common.parseInt(A.style.borderRightWidth),
+            Gti.Common.parseInt(A.style.borderBottomWidth),
+            Gti.Common.parseInt(A.style.borderLeftWidth)
+        ];
+    }
+
+    Gti.Common.getPaddings = function (A) {
+        return [Gti.Common.parseInt(A.style.paddingTop),
+            Gti.Common.parseInt(A.style.paddingRight),
+            Gti.Common.parseInt(A.style.paddingBottom),
+            Gti.Common.parseInt(A.style.paddingLeft)
+        ];
+    }
+
+    Gti.Common.parseInt = function (A, C) {
+        var B = parseInt(A);
+        return isNaN(parseInt(A)) ? C || 0 : B;
+    }
+
+    Gti.Common.browser = {};
+    Gti.Common.browser.IE6 = 0;
+    Gti.Common.browser.IE7 = 1;
+    Gti.Common.browser.Mozilla = 2;
+
+    Gti.Common.browser.getBrowser = function () {
+        if (window.XMLHttpRequest) {
+            // Mozilla, Safari,...IE7
+            if (!window.ActiveXObject) {
+                // Mozilla, Safari,...
+                return Gti.Common.browser.Mozilla;
+            } else {
+                // IE7
+                return Gti.Common.browser.IE7;
+            }
+        } else {
+            return Gti.Common.browser.IE6;
+        }
+    }
+
+
+
+</script>-->
+</body>
+</html>

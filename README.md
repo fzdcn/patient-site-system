@@ -1,29 +1,17 @@
-# patient-site-system
-
-## Project setup
+###使用yarn安装依赖
 ```
 yarn install
 ```
+### 启动项目
+```
+yarn run serve
+```
+### 打包发布
+```
+yarn run build
+```
+需要注意的是如果使用node.js安装的话，node.js的版本需>=8.11.4
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
 
-### Compiles and minifies for production
-```
-yarn build
-```
+#todo ParallelUglifyPlugin 这个插件得用法
 
-### Run your end-to-end tests
-```
-yarn test:e2e
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

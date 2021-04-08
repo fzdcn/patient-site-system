@@ -1,0 +1,224 @@
+.login {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 1366px;
+  min-height: 700px;
+
+  .logo {
+    position: absolute;
+    left: 50px;
+    top: 18px;
+    text-align: left;
+
+    img {
+      //width: 122px;
+      height: 49px;
+    }
+  }
+
+  .main-con {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+
+    >h2 {
+      font-size: 30px;
+      line-height: 58px;
+      color: #fff;
+      letter-spacing: 1px;
+      font-weight: 900;
+    }
+
+    .login-register-form {
+      .main-con-form-wrap {
+        position: relative;
+        width: 804px;
+        height: 528px;
+        background: url("../../assets/img/login/backImg.png") no-repeat;
+
+        .back {
+          position: absolute;
+          right: 50px;
+          top: 50px;
+          width: 22px;
+          height: 22px;
+          cursor: pointer;
+        }
+
+        .main-con-form {
+          position: absolute;
+          left: 282px;
+          top: 110px;
+          width: 364px;
+
+          &.find-con {
+            left: 292px;
+            top: 60px;
+          }
+
+          .ivu-tabs {
+            .ivu-tabs-bar {
+              border: 0;
+              margin-bottom: 0;
+            }
+
+            .ivu-tabs-nav {
+              .ivu-tabs-tab {
+                margin-right: 30px;
+                padding: 0;
+                font-size: 20px;
+                color: #ccc;
+              }
+
+              .ivu-tabs-tab-active {
+                color: #333;
+              }
+
+              .ivu-tabs-ink-bar {
+                height: 0;
+              }
+            }
+          }
+
+          >h3 {
+            text-align: left;
+            font-size: 20px;
+            color: #ccc;
+
+            span {
+              margin-right: 28px;
+              cursor: pointer;
+
+              &.active {
+                color: #333;
+              }
+            }
+          }
+
+          .login-form {
+            margin-top: 26px;
+
+            .ivu-form-item {
+              margin-bottom: 16px;
+            }
+
+            .ivu-input {
+              height: 42px;
+              border: none;
+              border-radius: 0;
+              border-bottom: 1px solid #ff9b10;
+            }
+
+            .ivu-input:focus {
+              box-shadow: none;
+            }
+
+            .ivu-form-item-error-tip {
+              padding-top: 3px;
+            }
+
+            .btn-code {
+              position: absolute;
+              right: 0;
+              top: 0;
+              color: #ff9b10;
+              border-color: #ff9b10;
+            }
+
+            .btn-count {
+              width: 86px;
+            }
+
+            .hide {
+              display: none;
+            }
+
+            .veriCodeImg {
+              cursor: pointer;
+              width: 83px;
+              height: 36px;
+            }
+
+            .agree-check {
+              font-size: 14px;
+              color: #ff9b10;
+
+              .ivu-checkbox-inner {
+                border-color: #ff9b10;
+                border-radius: 4px;
+              }
+            }
+
+            .login-btn {
+              height: 40px;
+              line-height: 40px;
+              padding: 0;
+              font-size: 16px;
+              border-radius: 20px;
+              background-color: #ff9030;
+            }
+
+            .captcha-wrap {
+              margin-top: 30px;
+            }
+
+          }
+
+          .other-operation {
+            color: #ff9b10;
+            text-align: right;
+            font-size: 14px;
+            line-height: 1;
+            margin-top: 15px;
+
+            a {
+              color: #ff9b10;
+            }
+
+            .line {
+              margin: 0 14px;
+            }
+          }
+
+          .yidun_intellisense--light {
+            .yidun_classic-container {
+              bottom: -25px;
+            }
+          }
+
+        }
+      }
+    }
+  }
+
+  .footer {
+    position: absolute;
+    left: 0;
+    bottom: 30px;
+    box-sizing: border-box;
+    padding: 0 50px;
+    width: 100%;
+    overflow: hidden;
+    color: #fff;
+    font-size: 14px;
+
+    p:nth-of-type(1) {
+      float: left;
+    }
+
+    p:nth-of-type(2) {
+      float: right;
+    }
+  }
+
+  .version-text {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    font-size: 12px;
+    color: white
+  }
+}

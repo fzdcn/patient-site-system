@@ -1,0 +1,102 @@
+.login-register-form {
+  .main-con-form-wrap {
+    position: relative;
+    width: 804px;
+    height: 528px;
+    background: url("../../assets/img/login/backImg.png") no-repeat;
+    .back {
+      position: absolute;
+      right: 50px;
+      top: 50px;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+    }
+    .main-con-form {
+      position: absolute;
+      left: 282px;
+      top: 110px;
+      width: 364px;
+      &.find-con {
+        left: 292px;
+        top: 60px;
+      }
+      >h3 {
+        text-align: left;
+        font-size: 20px;
+        color: #ccc;
+        span {
+          margin-right: 28px;
+          cursor: pointer;
+          &.active {
+            color: #333;
+          }
+        }
+      }
+      .login-form {
+        margin-top: 26px;
+        .ivu-form-item {
+          margin-bottom: 16px;
+        }
+        .ivu-input {
+          height: 42px;
+          border: none;
+          border-radius: 0;
+          border-bottom: 1px solid #ff9b10;
+        }
+        .ivu-input:focus {
+          box-shadow: none;
+        }
+        .ivu-form-item-error-tip {
+          padding-top: 3px;
+        }
+        .btn-code {
+          position: absolute;
+          right: 0;
+          top: 0;
+          color: #ff9b10;
+          border-color: #ff9b10;
+        }
+        .btn-count {
+          width: 86px;
+        }
+        .hide {
+          display: none;
+        }
+        .veriCodeImg {
+          cursor: pointer;
+          width: 83px;
+          height: 36px;
+        }
+        .agree-check {
+          font-size: 14px;
+          color: #ff9b10;
+          .ivu-checkbox-inner {
+            border-color: #ff9b10;
+            border-radius: 4px;
+          }
+        }
+        .other-operation {
+          color: #ff9b10;
+          text-align: right;
+          font-size: 14px;
+          line-height: 1;
+          a {
+            color: #ff9b10;
+          }
+          .line {
+            margin: 0 14px;
+          }
+        }
+        .login-btn {
+          margin-top: 25px;
+          width: 196px;
+          height: 40px;
+          font-size: 16px;
+          border-radius: 20px;
+          background-color: #ff9030;
+        }
+      }
+    }
+  }
+}

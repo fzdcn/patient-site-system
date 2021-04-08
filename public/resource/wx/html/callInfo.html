@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title>信息详情</title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.5/lib/index.css">
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../../common/vant/vant.css"/>
+    <link rel="stylesheet" href="../css/call.css"/>
+
+    <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vant@2.5/lib/vant.min.js"></script>
+    <!--开发环境，引入呼叫拨打电话文件，http 8002-->
+    <!--<script src="http://callapi.o-trial.com:8002/js/PjCall1.0.js "></script>-->
+    <!--测试及生产环境，引入呼叫拨打电话文件，https 8003-->
+    <script src="https://callapi.o-trial.com:8003/js/PjCall1.0_https.js"></script>
+    <script src="../config/config.js"></script>
+    <script src="../config/request.js "></script>
+
+</head>
+<body>
+<div id="callInfo">
+    <van-form @submit="onSubmit" validate-first @failed="onFailed" class="call-form">
+        <van-field
+                readonly
+                clickable
+                name="name"
+                required
+                :rules="[{ required: true, message: ' ' }]"
+                :value="form.name"
+                label="接听人"
+                placeholder="点击选择接听人"
+                @click="showUser = true"
+        ></van-field>
+        <van-popup v-model="showUser"
+                   position="bottom">
+            <van-picker
+                    show-toolbar
+                    :columns="columns"
+                    @confirm="onConfirm"
+                    @cancel="showUser = false"
+            ></van-picker>
+        </van-popup>
+        <van-field name="callType"
+                   required
+                   :rules="[{ required: true, message: '请选择呼叫类型' }]"
+                   label="呼叫类型">
+            <template #input>
+                <van-radio-group v-model="form.callType" direction="horizontal">
+                    <van-radio name="随访事件" checked-color="#f4a32d">随访事件</van-radio>
+                    <van-radio name="其他事务" checked-color="#f4a32d">其他事务</van-radio>
+                </van-radio-group>
+            </template>
+        </van-field>
+        <van-field
+                v-if="form.callType === '随访事件'"
+                name="activeNames1"
+                readonly
+                clickable
+                required
+                :rules="[{ required: true, message: ' ' }]"
+                :value="activeNames1"
+                label="随访访视"
+                placeholder="请选择随访访视"
+                @click="showPicker = true">
+        </van-field>
+        <van-popup v-model="showPicker"
+                   class="multi-pop"
+                   close-icon="sign"
+                   @close="handleClosePop(1, 'visitLists')"
+                   closeable position="bottom">
+            <van-tree-select
+                    :items="visitLists"
+                    :active-id.sync="activeIds1"
+            ></van-tree-select>
+        </van-popup>
+        <van-field
+                v-if="form.callType === '随访事件'"
+                name="activeNames2"
+                readonly
+                clickable
+                :value="activeNames2"
+                label="事件名称/类型"
+                placeholder="请选择事件名称/类型"
+                @click="showPicker2 = true">
+        </van-field>
+        <van-popup v-model="showPicker2"
+                   class="multi-pop"
+                   close-icon="sign"
+                   @close="handleClosePop(2, 'eventLists')"
+                   closeable position="bottom">
+            <van-tree-select
+                    :items="eventLists"
+                    :active-id.sync="activeIds2"
+            ></van-tree-select>
+        </van-popup>
+        <van-field
+                v-model="form.remark"
+                name="remark"
+                rows="3"
+                autosize
+                label="备注"
+                type="textarea"
+                maxlength="200"
+                show-word-limit
+                placeholder="请输入备注">
+        </van-field>
+        <div class="btn-wrap">
+            <van-button type="primary" color="#f4a32d" plain @click="onCancel">取消</van-button>
+            <van-button type="primary"
+                        color="#f4a32d" icon="phone-o"
+                        native-type="submit" >
+                呼叫
+            </van-button>
+
+        </div>
+    </van-form>
+</div>
+<script>
+new Vue({
+  el: '#callInfo',
+  data: {
+    form: {
+      name: '',
+      callType: '随访事件',
+      remark: '',
+    },
+    visitLists: [
+      {
+        // 导航名称
+        text: '随访访视',
+        children: [],
+      },
+    ],
+    eventLists: [
+      {
+        text: '事件名称/类型',
+        children: [],
+      },
+    ],
+    activeIds1: [], // 多选 访视
+    activeIds2: [], // 多选 事件
+    activeNames1: [], // 多选 拼接 访视名称/阶段
+    activeNames2: [], // 多选 拼接 事件名称/事件类型
+    activeParams1: [], // 多选 访视
+    activeParams2: [], // 多选 事件
+    showPicker: false,
+    showPicker2: false,
+    account: '',
+    timestamp: '',
+    sign: '',
+    siteNo: '',
+    subCode: '',
+    userId: '',
+    userName: '',
+    mobile: '',
+    userLists: [],
+    columns: [],
+    showUser: false,
+    currentUserObj: {},
+  },
+  created() {
+    const params = GetRequest();
+    this.siteNo = params.siteNo;
+    this.subCode = params.subCode;
+    this.userId = params.userId;
+    this.userName = params.userName;
+    this.mobile = params.mobile;
+    this.getUser();
+    this.getVisits();
+    this.getEvents();
+  },
+  mounted() {
+    this.initCall();
+  },
+  methods: {
+    // 初始化界面，计算sign值
+    initCall() {
+      getApi(`${$callUrl}/engine/call-center/initCall`, {
+        userId: this.userId,
+        wx: 4,
+      }).then((res) => {
+        if (res && res.data) {
+          this.account = res.data.account;
+          this.timestamp = res.data.timestamp;
+          this.sign = res.data.sign;
+          pjCall.initCall(this.account, this.timestamp, this.sign);
+        }
+      });
+    },
+    //  获取接听人
+    getUser() {
+      getApi(`${$callUrl}/engine/call-center/users`, {
+        siteNo: this.siteNo,
+        subCode: this.subCode,
+        wx: 4,
+      }).then((res) => {
+        if (res && res.data) {
+          this.userLists = res.data || [];
+          this.columns = this.userLists.map(item => ({
+            text: `${item.realName} / ${item.roles}`,
+            value: item,
+          }));
+        }
+      });
+    },
+    //  获取随访访视
+    getVisits() {
+      getApi(`${$callUrl}/engine/call-center/subject-visits`, {
+        siteNo: this.siteNo,
+        subCode: this.subCode,
+        wx: 4,
+      }).then((res) => {
+        if (res && res.data) {
+          const arr = res.data || [];
+          this.visitLists[0].children = arr.map(item => ({
+            text: item.visit && (`${item.visit.label}/${item.visit.epochLabel}`), // 访视名称/阶段
+            name: item.visit && item.visit.label, // 访视名称
+            id: item.subVstId,
+          }));
+        }
+      });
+    },
+    //  获取事件名称
+    getEvents() {
+      getApi(`${$callUrl}/engine/call-center/subject-accidents`, {
+        siteNo: this.siteNo,
+        subCode: this.subCode,
+        wx: 4,
+      }).then((res) => {
+        if (res && res.data) {
+          const arr = res.data || [];
+          this.eventLists[0].children = arr.map(item => ({
+            name: item.title, // 事件名称
+            text: `${item.title}/${item.accident && item.accident.label}`, // 事件名称/事件类型
+            id: item.subAcdntId,
+          }));
+        }
+      });
+    },
+    //  关闭 随访访视 / 事件名称 弹层，触发。1,随访访视，2，事件名称
+    handleClosePop(index, list) {
+      this[`activeNames${index}`] = this[list][0].children.filter((item) => {
+        if (this[`activeIds${index}`].includes(item.id)) {
+          return true;
+        }
+        return false;
+      });
+      this[`activeParams${index}`] = this[`activeNames${index}`].map(item => item.name);
+      this[`activeNames${index}`] = this[`activeNames${index}`].map(item => item.text);
+    },
+    onConfirm(value) {
+      this.form.name = value.text;
+      this.currentUserObj = value.value;
+      this.showUser = false;
+    },
+    onCancel() {
+      window.history.go(-1);
+    },
+    onFailed(err) { // 表单校验失败时触发
+      vant.Toast('必填项不能为空');
+    },
+    onSubmit() {
+      vant.Toast.loading({
+        duration: 0, // 持续展示 toast
+        message: '加载中...',
+        forbidClick: true,
+        loadingType: 'spinner',
+      });
+      const params = {
+        answerPerson: this.currentUserObj.realName, // 接听人
+        answerCode: this.currentUserObj.userId,
+        answerRole: this.currentUserObj.roles, // 接听人角色
+        initiator: this.userName, // 发起人
+        initiatorCode: this.userId,
+        projectId: this.currentUserObj.projectId,
+        callType: this.form.callType,
+        type: 2, // 类型：1.用户呼叫，2.受试者呼叫
+        remark: this.form.remark,
+        platform: '3', // 操作平台，1：web,2.app,3，微信(微信端必传)
+        siteNo: this.siteNo,
+        subCode: this.subCode,
+        wx: 4,
+      };
+      if (this.form.callType === '随访事件') {
+        params.subVstId = this.activeIds1.join(',');
+        params.visitType = this.activeParams1.join(',');
+        params.subAcdntId = this.activeIds2.join(',');
+        params.eventName = this.activeParams2.join(',');
+      }
+      postApi(`${$callUrl}/engine/call-center/call-phone`, params).then((ret) => {
+        if (ret && ret.data) {
+          getApi(`${$baseUrl}/call-center/call-mobiles`, {
+            answerMobile: this.currentUserObj.mobile,
+            outRecordNo: ret.data.outRecordNo,
+            userId: this.userId,
+            wx: 4,
+          }).then((res) => {
+            if (res && res.data) {
+              //  方法一：直接调用珮金提供的pjCall.call（）方法进行呼叫，但是没有成功和失败的回调
+              vant.Toast.clear();
+              vant.Toast.loading({
+                duration: 0, // 持续展示 toast
+                message: '正在呼叫，请等待...',
+                forbidClick: true,
+                loadingType: 'spinner',
+              });
+              const caller = res.data.callPersonMobile; // 呼出电话
+              const callee = res.data.answerMobile; // 被叫电话
+              pjCall.call(res.data.account, caller, callee, res.data.businessType,
+                res.data.outRecordNo, res.data.timestamp, res.data.sign, () => {
+                  setTimeout(() => {
+                    vant.Toast.clear();
+                    location.href = `mess.html?userId=${this.userId}&mobile=${this.mobile}`;
+                  }, 10000);
+                }, (err) => {
+                  vant.Toast.clear();
+                  vant.Toast.fail(err);
+                });
+            } else {
+              vant.Toast.clear();
+            }
+          }).catch((err) => {
+            vant.Toast.clear();
+            vant.Toast(err.message);
+          });
+        } else {
+          vant.Toast.clear();
+        }
+      }).catch((err) => {
+        // console.log('catch', err.message);
+        vant.Toast.clear();
+        vant.Toast(err.message);
+      });
+    },
+  },
+});
+</script>
+</body>
+</html>

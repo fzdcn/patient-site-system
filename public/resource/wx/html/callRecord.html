@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title></title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.5/lib/index.css">
+    <link rel="stylesheet" href="../css/common.css"/>
+    <link rel="stylesheet" href="../../common/vant/vant.css"/>
+    <link rel="stylesheet" href="../css/login.css"/>
+    <link rel="stylesheet" href="../css/call.css"/>
+
+    <!-- 引入 Vue 和 Vant 的 JS 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vant@2.5/lib/vant.min.js"></script>
+    <!--开发环境，引入呼叫拨打电话文件，http 8002-->
+    <!--<script src="http://callapi.o-trial.com:8002/js/PjCall1.0.js "></script>-->
+    <!--测试及生产环境，引入呼叫拨打电话文件，https 8003-->
+    <script src="https://callapi.o-trial.com:8003/js/PjCall1.0_https.js "></script>
+    <script src="../config/config.js"></script>
+    <!--请求接口文件-->
+    <script src="../config/request.js "></script>
+
+</head>
+<body>
+<div id="callRecord">
+    <div class="head">呼叫记录</div>
+    <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+        <van-list
+                class="call-record-list"
+                v-model="loading"
+                :finished="finished"
+                finished-text="没有更多了"
+                :error.sync="error"
+                error-text="请求失败，点击重新加载"
+                @load="onLoad"
+        >
+            <van-cell v-for="(item,index) in callRecords" @click="goToDetail(item)" >
+                <van-row class="title-call">
+                    <van-col span="12">发起人：{{item.initiator}}</van-col>
+                    <van-col span="12">接听人：{{item.answerPerson}}</van-col>
+                </van-row>
+                <div class="card-info">
+                    <van-row>
+                        <van-col span="24">呼叫类型：{{item.callType}}</van-col>
+                        <van-col span="18" v-if="item.callType === '随访事件'">随访访视：{{item.visitType || '--'}}</van-col>
+                        <van-col span="18" v-if="item.callType === '随访事件'">事件名称/类型：{{item.pinjieEvent || '--'}}</van-col>
+                        <van-col span="24" >呼叫时间：{{item.callTime || '--' }}</van-col>
+                        <van-col span="24">
+                            <span>拨打时长（秒）：{{item.callLength || '--'}}</span>
+                            <!--4 种状态：0成功，4 未拨打，1 callee未接，2 caller未接-->
+                            <van-tag v-if="item.callStatus === '0'" round color="#f4a32d">呼叫成功</van-tag>
+                            <van-tag v-if="item.callStatus === '4'" round color="#07c160">未拨打</van-tag>
+                            <van-tag v-if="item.callStatus === '1' || item.callStatus === '5'" round type="primary">接听人未接</van-tag>
+                            <van-tag v-if="item.callStatus === '2' || item.callStatus === '6'" round type="danger">发起人未接</van-tag>
+                        </van-col>
+                    </van-row>
+                    <img v-if="callEnable == 'true'" @click.stop="callBack(item)" :class="['call-image',{'call-image-other' : item.callType === '其他事务'}]" src="../../common/image/call.png"/>
+                </div>
+            </van-cell>
+        </van-list>
+    </van-pull-refresh>
+</div>
+<script>
+   new Vue({
+     el: '#callRecord',
+     data: {
+       account: '',
+       timestamp: '',
+       sign: '',
+       userId: '',
+       siteNo: '',
+       subCode: '',
+       loading: false,
+       error: false,
+       finished: false,
+       refreshing: false,
+       pageNum: 1,
+       pageSize: 10,
+       total: 0,
+       callRecords: [], // 全部的列表数据
+       currentList: [], // 上拉加载，一次只加载10条
+       callEnable: '',
+     },
+     created() {
+       const params = GetRequest();
+       this.userId = params.userId;
+       this.siteNo = params.siteNo;
+       this.subCode = params.subCode;
+       this.callEnable = params.callEnable;
+       this.init();
+     },
+     mounted() {
+       this.initCall();
+     },
+     methods: {
+       // 初始化界面，计算sign值
+       initCall() {
+         getApi(`${$callUrl}/engine/call-center/initCall`, {
+           userId: this.userId,
+           wx: 4,
+         }).then((res) => {
+           if (res && res.data) {
+             this.account = res.data.account;
+             this.timestamp = res.data.timestamp;
+             this.sign = res.data.sign;
+             pjCall.initCall(this.account, this.timestamp, this.sign);
+           }
+         });
+       },
+       init() {
+         this.loading = true;
+         getApi(`${$callUrl}/engine/call-center/call-records/paged-query`, {
+           pageNum: this.pageNum,
+           pageSize: this.pageSize,
+           siteNo: this.siteNo,
+           subCode: this.subCode,
+           wx: 4,
+         }).then((res) => {
+           this.loading = false;
+           if (res && res.data) {
+             this.currentList = res.data.list || [];
+             this.currentList = this.currentList.map((item) => {
+               const eventTypeArr = item.eventType ? item.eventType.split(',') : [];
+               const eventNameArr = item.eventName ? item.eventName.split(',') : [];
+               const eventPinjieArr = eventNameArr.map((name, i) => `${name}/${eventTypeArr[i]}`);
+               item.pinjieEvent = eventPinjieArr.length ? eventPinjieArr.join(',') : '--';
+               return item;
+             });
+             this.total = res.data.total;
+             this.callRecords = this.callRecords.concat(this.currentList);
+             if (this.callRecords.length === this.total) { // 如果结果等于total，证明这次请求已经到达最大值了
+               this.finished = true;
+             }
+           } else {
+             this.error = true;
+           }
+         }).catch((err) => {
+           this.loading = false;
+           this.error = true;
+         });
+       },
+       onLoad() {
+         if (this.refreshing) {
+           this.currentList = [];
+           this.callRecords = [];
+           this.pageNum = 1;
+           this.init();
+           this.refreshing = false;
+           return;
+         }
+         if (!this.finished) {
+           this.pageNum++;
+           this.init();
+         }
+       },
+       onRefresh() {
+         // 清空列表数据
+         this.finished = false;
+         // 重新加载数据
+         // 将 loading 设置为 true，表示处于加载状态
+         this.loading = true;
+         this.onLoad();
+       },
+       // 电话回拨
+       callBack(item) {
+         vant.Dialog.confirm({
+           title: '提示',
+           message: '确认再次呼叫？',
+         }).then(() => {
+           postApi(`${$callUrl}/engine/call-center/back-call`, {
+             ...item,
+             wx: 4,
+           }).then((res) => {
+             if (res && res.data) {
+               this.pageNum = 1;
+               this.currentList = [];
+               this.callRecords = [];
+               this.init();
+               //  直接调用珮金提供的pjCall.call（）方法进行呼叫，
+               const caller = res.data.callPersonMobile; // 呼出电话
+               const callee = res.data.answerMobile; // 被叫电话
+               vant.Toast.clear();
+               vant.Toast.loading({
+                 duration: 0, // 持续展示 toast
+                 message: '正在呼叫，请等待...',
+                 forbidClick: true,
+                 loadingType: 'spinner',
+               });
+               pjCall.call(res.data.account, caller, callee, res.data.businessType,
+                 res.data.outRecordNo, res.data.timestamp, res.data.sign, () => {
+                   setTimeout(() => {
+                     vant.Toast.clear();
+                   }, 6000);
+                 }, (err) => {
+                   vant.Toast.clear();
+                   vant.Toast.fail(err);
+                 });
+             }
+           });
+         }).catch(() => {
+           // on cancel
+         });
+       },
+       //    跳转到详情页
+       goToDetail(item) {
+         location.href = `callRecordDetail.html?id=${item.vid}`;
+       },
+     },
+   });
+</script>
+</body>
+</html>

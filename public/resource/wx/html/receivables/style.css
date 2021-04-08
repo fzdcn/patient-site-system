@@ -1,0 +1,43 @@
+.head{
+    width: 100%;
+    height: 3em;
+    text-align: center;
+    line-height: 3em;
+    background:linear-gradient(-90deg,rgba(239,201,85,1),#fcb04c);
+    color: #FFFFFF;
+    font-size: 1.3em;
+}
+
+.list li{
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    align-items: center;
+    color: #333;
+    border-bottom: 1px solid #f0f0f0;
+}
+.list li p, .list li span{
+    flex: 1;
+}
+.list li span{
+    text-align: right;
+    margin-right: 10px;
+}
+.list li:after{
+    content: '';
+    width: 14px;
+    height: 14px;
+    background: url("../../images/angle-right.png") no-repeat center center / contain;
+    display: inline-block;
+}
+.detail-list{
+    padding: 10px 0;
+}
+.detail-list li{
+    padding: 0.4rem 0.8rem;
+    color: #333;
+}
+.detail-list li p{
+    display: inline-block;
+    width: 130px;
+    text-align: right;
+}

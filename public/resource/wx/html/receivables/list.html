@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0"/>
+    <title>收款记录</title>
+    <link rel="stylesheet" href="../../css/common.css"/>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <div>
+        <h2 class="head">收款记录</h2>
+        <ul class="list">
+<!--            <li>-->
+<!--                <p>2020-01-10 18：40</p>-->
+<!--                <span>200.00元</span>-->
+<!--            </li>-->
+        </ul>
+    </div>
+</body>
+<script src="../../js/jquery-1.12.2.min.js"></script>
+<script src="../../config/config.js"></script>
+<script>
+    $(() => {
+  const params = GetRequest();
+  const { mobile } = params;
+  let data = [];
+  getDetailInfo();
+  function getDetailInfo() {
+    if (!mobile) {
+          return;
+    }
+    $.ajax({
+          url: `${$baseUrl}/user/query-by-mobile`,
+          type: 'get',
+          dataType: 'json',
+          // contentType: "application/json",
+          contentType: 'application/json; charset=utf-8',
+          data: {
+            mobile,
+          },
+          success(res) {
+            if (res.code === 1) {
+              data = res.data.successOrders;
+              formatList(res.data.successOrders);
+            }
+          },
+    });
+  }
+  function formatList(data) {
+    const htmlArr = data.map(item => `
+    <li>
+        <p>${formatTime(item.updateTime)}</p>
+        <span>${item.amount || 0}元</span>
+    </li>
+    `);
+    $('.list').html(htmlArr.join(''))
+  }
+  function formatTime(time) {
+    const date = new Date(time);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hour = date.getHours();
+    const second = date.getMinutes();
+    return `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day} ${hour < 10 ? `0${hour}` : hour}:${second < 10 ? `0${second}` : second}`;
+  }
+
+  $('.list').on('click', 'li', function() {
+    const index = $(this).index();
+    location.href = './detail.html?detailInfo='+ JSON.stringify(data[index]);
+  })
+});
+</script>
+</html>

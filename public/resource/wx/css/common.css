@@ -1,0 +1,26 @@
+*{ -webkit-tap-highlight-color:transparent; margin: 0; padding:0; font-family: PingFangSC,Helvetica,Droid Sans,Arial,sans-serif; }
+html,body,h1,h2,h3,h4,h5,h6,div,img,ul,ol,li,input,dl,dt,dd,p{ margin: 0; padding: 0; font-family: PingFangSC-Regular,Helvetica,"Droid Sans",Arial,sans-serif; }
+a{ text-decoration: none; -webkit-tap-highlight-color: transparent; touch-callout: none; -webkit-touch-callout: none; color:#000; vertical-align: bottom; }
+ul,ol,dl{ list-style: none; } .wrap_width{ max-width: 600px; margin:0 auto; }
+.maxWidth{ max-width: 600px; margin:0 auto; }
+.clear{ content:''; display: table; clear:both; }
+.hundred{ width: 100%; }
+.container{ margin: 0 10px; margin-top: 10px; }
+.overflow{ overflow : hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+ /*5*/ @media screen and (min-device-width: 320px) { body,select,.clasy-ul li{font-size: 10px;-webkit-text-size-adjust:none;}/*10px*/ }
+@media screen and (min-device-width: 360px) { body,select,.clasy-ul li{font-size: 11px;}/*11px*/ }
+/*6*/ @media screen and (min-device-width : 375px){ body,select,.clasy-ul li{font-size: 12px;}/*12px*/ }
+/*6+*/ @media screen and (min-device-width : 414px){ body,select,.clasy-ul li{font-size: 14px;}/*14px*/ }
+body{ width: 100%; margin: 0 auto;
+ max-width: 35rem;
+}
+
+
+/*common */
+.body {
+    height: 100vh;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
